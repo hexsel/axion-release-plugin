@@ -9,8 +9,15 @@ class SnapshotDependenciesChecker {
         Collection<String> projectVersions = project.allprojects.collect {toFullVersion(it)}
         Collection<String> allDependenciesVersions = project.allprojects.collect {
             it.configurations.collect { config ->
-                config.allDependencies.findAll {isSnapshot(it)}.collect {toFullVersion(it)}
-
+                if (config.isCanBeResolved()) { 
+                    config.resolvedConfiguration.firstLevelModuleDependencies
+                        .findAll { isSnapshot(it) }
+                        .collect { toFullVersion(it) }
+                } else {
+                    config.allDependencies
+                        .findAll { isSnapshot(it) }
+                        .collect { toFullVersion(it) }
+                }
             }
         }.flatten().unique()
         allDependenciesVersions.removeAll(projectVersions)
